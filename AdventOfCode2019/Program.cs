@@ -10,7 +10,7 @@ namespace AdventOfCode2019
     {
         static void Main(string[] args)
         {
-            var runnable = new Day2a();
+            var runnable = new Day2b();
             var result = runnable.Run();
             Console.WriteLine(result);
         }

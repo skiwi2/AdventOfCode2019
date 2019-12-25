@@ -11,25 +11,35 @@ namespace AdventOfCode2019
     {
         public int Run()
         {
-            var zeroOffset = 15000;
-            var size = 30000;
-            var wires = 2;
-            var cells = new bool[size, size, wires];
+            var cells = new Dictionary<(int, int), HashSet<int>>();
             var rawPaths = File.ReadAllLines("day3.txt");
 
-            DrawWire(ref cells, zeroOffset, 0, rawPaths[0].Split(','));
-            DrawWire(ref cells, zeroOffset, 1, rawPaths[1].Split(','));
+            DrawWire(cells, 0, rawPaths[0].Split(','));
+            DrawWire(cells, 1, rawPaths[1].Split(','));
 
-            return FindEligibleCrossings(ref cells, wires, size, zeroOffset)
+            return FindEligibleCrossings(cells, rawPaths.Length)
                 .Select(t => CalculateManhattanDistanceFromCentralPort(t.Item1, t.Item2))
                 .Min();
         }
 
-        void DrawWire(ref bool[,,] cells, int zeroOffset, int wire, IEnumerable<string> path)
+        void DrawWire(IDictionary<(int, int), HashSet<int>> cells, int wire, IEnumerable<string> path)
         {
+            void AddCell(int xx, int yy)
+            {
+                if (cells.TryGetValue((xx, yy), out var set))
+                {
+                    set.Add(wire);
+                }
+                else
+                {
+                    cells[(xx, yy)] = new HashSet<int> { wire };
+
+                }
+            }
+
             var x = 0;
             var y = 0;
-            cells[zeroOffset + x, zeroOffset + y, wire] = true;
+            AddCell(x, y);
             foreach (var move in path)
             {
                 var direction = move[0];
@@ -39,25 +49,25 @@ namespace AdventOfCode2019
                     case 'R':
                         for (int i = 0; i < number; i++)
                         {
-                            cells[zeroOffset + ++x, zeroOffset + y, wire] = true;
+                            AddCell(++x, y);
                         }
                         break;
                     case 'U':
                         for (int i = 0; i < number; i++)
                         {
-                            cells[zeroOffset + x, zeroOffset + ++y, wire] = true;
+                            AddCell(x, ++y);
                         }
                         break;
                     case 'L':
                         for (int i = 0; i < number; i++)
                         {
-                            cells[zeroOffset + --x, zeroOffset + y, wire] = true;
+                            AddCell(--x, y);
                         }
                         break;
                     case 'D':
                         for (int i = 0; i < number; i++)
                         {
-                            cells[zeroOffset + x, zeroOffset + --y, wire] = true;
+                            AddCell(x, --y);
                         }
                         break;
                     default:
@@ -66,32 +76,12 @@ namespace AdventOfCode2019
             }
         }
 
-        IList<(int, int)> FindEligibleCrossings(ref bool[,,] cells, int wires, int size, int zeroOffset)
+        IEnumerable<(int, int)> FindEligibleCrossings(IDictionary<(int, int), HashSet<int>> cells, int wires)
         {
-            var crossings = new List<(int, int)>();
-            for (int x = 0; x < size; x++)
-            {
-                for (int y = 0; y < size; y++)
-                {
-                    if (x == zeroOffset && y == zeroOffset)
-                    {
-                        continue;
-                    }
-                    bool allWiresCross = true;
-                    for (int z = 0; z < wires; z++)
-                    {
-                        if (!cells[x, y, z])
-                        {
-                            allWiresCross = false;
-                        }
-                    }
-                    if (allWiresCross)
-                    {
-                        crossings.Add((x - zeroOffset, y - zeroOffset));
-                    }
-                }
-            }
-            return crossings;
+            return cells
+                .Where(kvp => kvp.Key.Item1 != 0 && kvp.Key.Item2 != 0)
+                .Where(kvp => kvp.Value.Count == wires)
+                .Select(kvp => kvp.Key);
         }
 
         int CalculateManhattanDistanceFromCentralPort(int x, int y)

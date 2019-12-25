@@ -14,8 +14,10 @@ namespace AdventOfCode2019
             var cells = new Dictionary<(int, int), HashSet<int>>();
             var rawPaths = File.ReadAllLines("day3.txt");
 
-            DrawWire(cells, 0, rawPaths[0].Split(','));
-            DrawWire(cells, 1, rawPaths[1].Split(','));
+            for (int i = 0; i < rawPaths.Length; i++)
+            {
+                DrawWire(cells, i, rawPaths[i].Split(','));
+            }
 
             return FindEligibleCrossings(cells, rawPaths.Length)
                 .Select(t => CalculateManhattanDistanceFromCentralPort(t.Item1, t.Item2))
